@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Тест WASM-функции sort_std</title>
+  <!-- Подключаем сгенерированный Emscripten-скрипт -->
+  <script src="test_module.js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    button { padding: 8px 16px; font-size: 16px; }
+    pre { background: #f0f0f0; padding: 10px; height: 300px; overflow: auto; }
+  </style>
+</head>
+<body>
+  <h1>Тест функции <code>sort_std()</code> из WASM</h1>
+  <button id="run-btn">Запустить sort_std()</button>
+  <pre id="output"></pre>
+
+  <script>
+    // Ждём полной инициализации модуля
+    Module.onRuntimeInitialized = () => {
+      // "cwrap" позволяет обернуть C-функцию в JS-функцию
+      const sortStd = Module.cwrap('sort_std', 'number', []);
+
+      document.getElementById('run-btn').addEventListener('click', () => {
+        const out = document.getElementById('output');
+        out.textContent = '';
+
+        // Перехватываем console.log, чтобы вывести в <pre>
+        const origLog = console.log;
+        console.log = (...args) => {
+          out.textContent += args.join(' ') + '\n';
+          origLog.apply(console, args);
+        };
+
+        // Вызываем нашу функцию
+        sortStd();
+
+        // Восстанавливаем оригинальный console.log
+        console.log = origLog;
+      });
+    };
+  </script>
+</body>
+</html>

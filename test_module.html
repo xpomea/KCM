@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8" />
   <title>Тест WASM-функции sort_std</title>
-  <!-- Подключаем сгенерированный Emscripten-скрипт -->
   <script src="test_module.js"></script>
   <style>
     body { font-family: sans-serif; padding: 20px; }
@@ -17,27 +16,48 @@
   <pre id="output"></pre>
 
   <script>
-    // Ждём полной инициализации модуля
     Module.onRuntimeInitialized = () => {
-      // "cwrap" позволяет обернуть C-функцию в JS-функцию
       const sortStd = Module.cwrap('sort_std', 'number', []);
+      const bubble = Module.cwrap('bubble', 'number', []);
+      const outputElement = document.getElementById('output');
 
       document.getElementById('run-btn').addEventListener('click', () => {
-        const out = document.getElementById('output');
-        out.textContent = '';
+        outputElement.textContent = 'init\n';
 
-        // Перехватываем console.log, чтобы вывести в <pre>
-        const origLog = console.log;
-        console.log = (...args) => {
-          out.textContent += args.join(' ') + '\n';
-          origLog.apply(console, args);
+        // Function to append text to the output element
+        const logToOutput = (text) => {
+          outputElement.textContent += text + '\n';
         };
 
-        // Вызываем нашу функцию
-        sortStd();
+        // If test_module.js uses console.log, redirect it
+        const origLog = console.log;
+        //console.log = (...args) => {
+          //logToOutput(args.join(' '));
+          //origLog.apply(console, args);
+        //};
 
-        // Восстанавливаем оригинальный console.log
+        // If test_module.js uses Module.print or Module.printErr, redirect them
+        const origPrint = Module.print || (() => {});
+        const origPrintErr = Module.printErr || (() => {});
+
+        Module.print = (text) => {
+          logToOutput(text);
+          origPrint(text);
+        };
+
+        Module.printErr = (text) => {
+          logToOutput(text);
+          origPrintErr(text);
+        };
+
+        //sortStd();
+        bubble();
+
+
+        // Restore original functions
         console.log = origLog;
+        Module.print = origPrint;
+        Module.printErr = origPrintErr;
       });
     };
   </script>

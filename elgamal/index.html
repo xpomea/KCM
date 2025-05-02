@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>DH HTTP Client</title>
+</head>
+<body>
+  <h1>Shared Key:</h1>
+  <p id="result">Loading...</p>
+
+  <script>
+    let g, p, A, b;
+
+    fetch('/params')
+      .then(res => res.json())
+      .then(data => {
+        g = BigInt(data.g);
+        p = BigInt(data.p);
+        A = BigInt(data.A);
+        b = BigInt(Math.floor(Math.random() * 10) + 1); 
+        const B = g ** b % p;
+
+        return fetch('/exchange', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ B: B.toString() })
+        });
+      })
+      .then(() => {
+        const shared = A ** b % p;
+        document.getElementById('result').innerText = shared.toString();
+      });
+  </script>
+</body>
+</html>
